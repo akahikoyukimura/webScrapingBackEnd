@@ -103,18 +103,13 @@ public class ScraperServiceImpl implements ScraperService {
         requestDTORepository.save(request);
         }
         try {
-            //Document document = Jsoup.connect(url).get();
             Document document = Jsoup
                     .connect(url)
                     .userAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.38 Safari/537.36")
                     .get();
-            
-            //Element element = document.getElementsByClass("a-section").first();
 
             System.out.println(url);
-            
             Elements elements;
-            
             if (vehicleModel.contains("&")) {
             	
             	String[] parts = vehicleModel.split("&");
@@ -124,16 +119,13 @@ public class ScraperServiceImpl implements ScraperService {
         			elements=document.getElementsByClass("s-card-container s-overflow-hidden aok-relative s-expand-height s-include-content-margin s-latency-cf-section s-card-border");
         		else
                  elements = document.getElementsByClass("s-card-container s-overflow-hidden aok-relative s-include-content-margin s-latency-cf-section s-card-border");
-                //System.out.println(elements);
             }
             else {
                  elements = document.getElementsByClass("s-card-container s-overflow-hidden aok-relative s-include-content-margin s-latency-cf-section s-card-border");
-
             }
-                for (Element ads: elements) {
+            
+            for (Element ads: elements) {
                     ResponseDTO responseDTO = new ResponseDTO();
-                    
-                    //System.out.println(ads.child(0).text());
                     
                     if (!StringUtils.isEmpty(ads.child(0).text()) 
                     		&& containsAllWords(ads.child(0).text(), vehicleModel.split(" "))) {
@@ -152,19 +144,15 @@ public class ScraperServiceImpl implements ScraperService {
                         		"https://www.amazon.com"+ads
                         		.getElementsByClass("a-link-normal s-underline-text s-underline-link-text s-link-style a-text-normal")
                         		.attr("href"));
+                        responseDTO.setStore("Amazon");
                         
                     }
                     if (responseDTO.getUrl() != null && responseDTO.getPrice()!=null) {
                     	/*if(responseDTORepository.findByUrl(responseDTO.getUrl())!=null)
-                        {System.out.println("truehhhhhhhhhhhhhhhhhhhhh");
-                        	
+                        {	
                         }else
-                        {
-                        	System.out.println("nnnnnnnnnnnnnnnnnnn");
-                        	responseDTO.setRequest(request);
+                        {responseDTO.setRequest(request);
                         }*/
-                    	//responseDTOS.add(responseDTO);
-                    	//System.out.println(responseDTO.getTitle());
                     	String s=responseDTO.getTitle();
                     	String p=responseDTO.getPrice();
                     	ResponseDTO r=responseDTORepository.findByTitle(s);
@@ -175,8 +163,6 @@ public class ScraperServiceImpl implements ScraperService {
                     		responseDTOS.add(responseDTO);
                     		responseDTORepository.save(responseDTO);}
                     	else if(!r.getPrice().equals(p)) {
-                    		System.out.println(r.getPrice());
-                    		System.out.println(responseDTO.getPrice());
                     		System.out.println("seconde");
                     		r.setPrice(responseDTO.getPrice());
                     		responseDTOS.add(r);

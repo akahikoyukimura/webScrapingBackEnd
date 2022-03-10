@@ -4,8 +4,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 
 import lombok.Data;
 
@@ -19,6 +17,7 @@ public class ResponseDTO {
 	private String url;
 	private String image;
 	private String price;
+	private String store;
 	
 	//@ManyToOne
     //@JoinColumn(name="request_id", nullable=false)
@@ -38,17 +37,26 @@ public class ResponseDTO {
 	}
 	
 	
+	
+	
+	public String getStore() {
+		return store;
+	}
+	public void setStore(String store) {
+		this.store = store;
+	}
 	public ResponseDTO() {
 		super();
 	}
 	
 	
-	public ResponseDTO(String title, String url, String image, String price) {
+	public ResponseDTO(String title, String url, String image, String price,String store) {
 		super();
 		this.title = title;
 		this.url = url;
 		this.image = image;
 		this.price = price;
+		this.store = store;
 		//this.request = request;
 	}
 	public Long getId() {
