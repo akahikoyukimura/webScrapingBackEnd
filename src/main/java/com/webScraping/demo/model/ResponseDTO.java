@@ -20,9 +20,9 @@ public class ResponseDTO {
 	private String image;
 	private String price;
 	
-	@ManyToOne
-    @JoinColumn(name="request_id", nullable=false)
-    private RequestDTO request;
+	//@ManyToOne
+    //@JoinColumn(name="request_id", nullable=false)
+    //private RequestDTO request;
 	
 	public String getTitle() {
 		return title;
@@ -43,13 +43,13 @@ public class ResponseDTO {
 	}
 	
 	
-	public ResponseDTO(String title, String url, String image, String price, RequestDTO request) {
+	public ResponseDTO(String title, String url, String image, String price) {
 		super();
 		this.title = title;
 		this.url = url;
 		this.image = image;
 		this.price = price;
-		this.request = request;
+		//this.request = request;
 	}
 	public Long getId() {
 		return id;
@@ -57,12 +57,8 @@ public class ResponseDTO {
 	public void setId(Long id) {
 		this.id = id;
 	}
-	public RequestDTO getRequest() {
-		return request;
-	}
-	public void setRequest(RequestDTO request) {
-		this.request = request;
-	}
+	
+	
 	public String getImage() {
 		return image;
 	}

@@ -44,14 +44,18 @@ public class ScraperServiceImpl implements ScraperService {
     public Set<ResponseDTO> getVehicleByModel(String vehicleModel) {
     	
 
-    	if (requestDTORepository.findByKeyWord(vehicleModel)!=null) {
+    	/*if (requestDTORepository.findByKeyWord(vehicleModel)!=null) {
 			return responseDTORepository.findByRequest(requestDTORepository.findByKeyWord(vehicleModel));
-		}else {
+		}*/
     	
         Set<ResponseDTO> responseDTOS = new HashSet<>();
+        /*RequestDTO request=null;
         
-        RequestDTO request=new RequestDTO(vehicleModel);
+        if(requestDTORepository.findByKeyWord(vehicleModel)==null) {
+        	
+        request=new RequestDTO(vehicleModel);
         requestDTORepository.save(request);
+        }*/
 
         
         for (String url: urls) {
@@ -63,22 +67,41 @@ public class ScraperServiceImpl implements ScraperService {
                 //extractDataFromRiyasewana(responseDTOS, url + vehicleModel,request);
             }else if(url.contains("amazon")) {
             	
-            	if(vehicleModel.contains(" "))
-            		extractDataFromAmazon(responseDTOS, url + vehicleModel.replaceAll(" ", "+"),request, vehicleModel);
+            	if (vehicleModel.contains("&")) {
+            		
+            		String[] parts = vehicleModel.split("&");
+            		String part1 = parts[0];
+            		String part2 = parts[1];
+            		
+            		if (vehicleModel.contains(" ")) {
+            			extractDataFromAmazon(responseDTOS,url + part1.replaceAll(" ", "+")+"&i="+part2+"-intl-ship", vehicleModel);
+					}else
+						extractDataFromAmazon(responseDTOS, url + part1+"&i="+part2+"-intl-ship", vehicleModel);
+				}
+            	else if(vehicleModel.contains(" "))
+            		extractDataFromAmazon(responseDTOS, url + vehicleModel.replaceAll(" ", "+"), vehicleModel);
             	else
-            		extractDataFromAmazon(responseDTOS, url + vehicleModel,request, vehicleModel);
+            		extractDataFromAmazon(responseDTOS, url + vehicleModel, vehicleModel);
             }
 
         }
 
         
         return responseDTOS;
-    }
+    
     	}
     
     
-    private void extractDataFromAmazon(Set<ResponseDTO> responseDTOS, String url,RequestDTO request,String vehicleModel) {
+    
+    private void extractDataFromAmazon(Set<ResponseDTO> responseDTOS, String url,String vehicleModel) {
 
+
+        
+        if(requestDTORepository.findByKeyWord(vehicleModel)==null) {
+        RequestDTO request=null;	
+        request=new RequestDTO(vehicleModel);
+        requestDTORepository.save(request);
+        }
         try {
             //Document document = Jsoup.connect(url).get();
             Document document = Jsoup
@@ -90,41 +113,85 @@ public class ScraperServiceImpl implements ScraperService {
 
             System.out.println(url);
             
-            Elements elements = document.getElementsByClass("s-card-container s-overflow-hidden aok-relative s-include-content-margin s-latency-cf-section s-card-border");
-            //System.out.println(elements.first().getElementsByClass("a-offscreen").text().substring(1).replace(".", ","));
-
-            for (Element ads: elements) {
-                ResponseDTO responseDTO = new ResponseDTO();
-
-                if (!StringUtils.isEmpty(ads.child(0).text()) 
-                		&& containsAllWords(ads.child(0).text(), vehicleModel.split(" "))) {
-                	
-                    responseDTO.setTitle(ads
-                    		.getElementsByClass("a-link-normal s-underline-text s-underline-link-text s-link-style a-text-normal")
-                    		.first().child(0).text());
-                    responseDTO.setImage(ads.getElementsByTag("img").attr("src"));
-                    
-                    if(!StringUtils.isEmpty(ads.getElementsByClass("a-offscreen").html())
-                    		&& !StringUtils.isEmpty(ads.getElementsByClass("a-price").first().getElementsByClass("a-offscreen").html())) {
-                    	
-                    responseDTO.setPrice((ads.getElementsByClass("a-price").first().getElementsByClass("a-offscreen").html().replaceAll("[$,]", "")));
-                    }
-                    responseDTO.setUrl(
-                    		"https://www.amazon.com"+ads
-                    		.getElementsByClass("a-link-normal s-underline-text s-underline-link-text s-link-style a-text-normal")
-                    		.attr("href"));
-                    responseDTO.setRequest(request);
-                }
-                if (responseDTO.getUrl() != null && responseDTO.getPrice()!=null) {
-                	responseDTOS.add(responseDTO);
-                	responseDTORepository.save(responseDTO);
-                }
-                
+            Elements elements;
+            
+            if (vehicleModel.contains("&")) {
+            	
+            	String[] parts = vehicleModel.split("&");
+        		vehicleModel = parts[0];
+        		
+        		if(vehicleModel.contains(" "))
+        			elements=document.getElementsByClass("s-card-container s-overflow-hidden aok-relative s-expand-height s-include-content-margin s-latency-cf-section s-card-border");
+        		else
+                 elements = document.getElementsByClass("s-card-container s-overflow-hidden aok-relative s-include-content-margin s-latency-cf-section s-card-border");
+                //System.out.println(elements);
             }
+            else {
+                 elements = document.getElementsByClass("s-card-container s-overflow-hidden aok-relative s-include-content-margin s-latency-cf-section s-card-border");
+
+            }
+                for (Element ads: elements) {
+                    ResponseDTO responseDTO = new ResponseDTO();
+                    
+                    //System.out.println(ads.child(0).text());
+                    
+                    if (!StringUtils.isEmpty(ads.child(0).text()) 
+                    		&& containsAllWords(ads.child(0).text(), vehicleModel.split(" "))) {
+                    	
+                        responseDTO.setTitle(ads
+                        		.getElementsByClass("a-link-normal s-underline-text s-underline-link-text s-link-style a-text-normal")
+                        		.first().child(0).text());
+                        responseDTO.setImage(ads.getElementsByTag("img").attr("src"));
+                        
+                        if(!StringUtils.isEmpty(ads.getElementsByClass("a-offscreen").html())
+                        		&& !StringUtils.isEmpty(ads.getElementsByClass("a-price").first().getElementsByClass("a-offscreen").html())) {
+                        	
+                        responseDTO.setPrice((ads.getElementsByClass("a-price").first().getElementsByClass("a-offscreen").html().replaceAll("[$,]", "")));
+                        }
+                        responseDTO.setUrl(
+                        		"https://www.amazon.com"+ads
+                        		.getElementsByClass("a-link-normal s-underline-text s-underline-link-text s-link-style a-text-normal")
+                        		.attr("href"));
+                        
+                    }
+                    if (responseDTO.getUrl() != null && responseDTO.getPrice()!=null) {
+                    	/*if(responseDTORepository.findByUrl(responseDTO.getUrl())!=null)
+                        {System.out.println("truehhhhhhhhhhhhhhhhhhhhh");
+                        	
+                        }else
+                        {
+                        	System.out.println("nnnnnnnnnnnnnnnnnnn");
+                        	responseDTO.setRequest(request);
+                        }*/
+                    	//responseDTOS.add(responseDTO);
+                    	//System.out.println(responseDTO.getTitle());
+                    	String s=responseDTO.getTitle();
+                    	String p=responseDTO.getPrice();
+                    	ResponseDTO r=responseDTORepository.findByTitle(s);
+                    			
+                    	System.out.println(r);
+                    	if(r==null) {
+                    		System.out.println("farst");
+                    		responseDTOS.add(responseDTO);
+                    		responseDTORepository.save(responseDTO);}
+                    	else if(!r.getPrice().equals(p)) {
+                    		System.out.println(r.getPrice());
+                    		System.out.println(responseDTO.getPrice());
+                    		System.out.println("seconde");
+                    		r.setPrice(responseDTO.getPrice());
+                    		responseDTOS.add(r);
+                    		}
+                    	else
+                    		responseDTOS.add(r);
+                    }
+                    
+                }
+
         } catch (IOException ex) {
             ex.printStackTrace();
         }
     }
+    
 
     private void extractDataFromRiyasewana(Set<ResponseDTO> responseDTOS, String url,RequestDTO request) {
 
@@ -140,7 +207,7 @@ public class ScraperServiceImpl implements ScraperService {
                 if (!StringUtils.isEmpty(ads.attr("title")) ) {
                     responseDTO.setTitle(ads.attr("title"));
                     responseDTO.setUrl(ads.attr("href"));
-                    responseDTO.setRequest(request);
+                    //responseDTO.setRequest(request);
                 }
                 if (responseDTO.getUrl() != null) {
                 	responseDTOS.add(responseDTO);
@@ -168,7 +235,7 @@ public class ScraperServiceImpl implements ScraperService {
                 if (StringUtils.isNotEmpty(ads.attr("href"))) {
                     responseDTO.setTitle(ads.attr("title"));
                     responseDTO.setUrl("https://ikman.lk"+ ads.attr("href"));
-                    responseDTO.setRequest(request);
+                    //responseDTO.setRequest(request);
                 }
                 if (responseDTO.getUrl() != null) {
                 	responseDTOS.add(responseDTO);
