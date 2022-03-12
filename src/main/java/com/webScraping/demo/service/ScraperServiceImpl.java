@@ -108,7 +108,7 @@ public class ScraperServiceImpl implements ScraperService {
             		subURL=subURL.replaceAll(" ", "+");
             	System.out.println(subURL);
             	System.out.println(url+subURL);
-            	extractDataFromAliexpress(responseDTOS, url + subURL, vehicleModel.split("&")[0]);
+            	extractDataFromAlibaba(responseDTOS, url + subURL, vehicleModel.split("&")[0]);
             }
 
         }
@@ -119,7 +119,7 @@ public class ScraperServiceImpl implements ScraperService {
     	}
     
     
-private void extractDataFromAliexpress(Set<ResponseDTO> responseDTOS, String url,String vehicleModel) {
+private void extractDataFromAlibaba(Set<ResponseDTO> responseDTOS, String url,String vehicleModel) {
 
 
         
