@@ -87,7 +87,7 @@ public class ScraperServiceImpl implements ScraperService {
             	
             }else if(url.contains("walmart")) {
             	
-            	String subURL=vehicleModel;
+            	/*String subURL=vehicleModel;
             	
             	if(vehicleModel.contains("&"))
             		subURL=vehicleModel.replaceAll("&", "+");
@@ -96,7 +96,19 @@ public class ScraperServiceImpl implements ScraperService {
             	System.out.println(subURL);
             	
             	extractDataFromWalmart(responseDTOS, url + subURL, vehicleModel.split("&")[0]);
+            	*/
             	
+            }else if(url.contains("alibaba")) {
+            	
+            	String subURL=vehicleModel;
+            	
+            	if(vehicleModel.contains("&"))
+            		subURL=vehicleModel.replaceAll("&", "+");
+            	if(vehicleModel.contains(" "))
+            		subURL=subURL.replaceAll(" ", "+");
+            	System.out.println(subURL);
+            	System.out.println(url+subURL);
+            	extractDataFromAliexpress(responseDTOS, url + subURL, vehicleModel.split("&")[0]);
             }
 
         }
@@ -106,6 +118,88 @@ public class ScraperServiceImpl implements ScraperService {
     
     	}
     
+    
+private void extractDataFromAliexpress(Set<ResponseDTO> responseDTOS, String url,String vehicleModel) {
+
+
+        
+        if(requestDTORepository.findByKeyWord(vehicleModel)==null) {
+        RequestDTO request=null;	
+        request=new RequestDTO(vehicleModel);
+        requestDTORepository.save(request);
+        }
+        try {
+            Document document = Jsoup
+                    .connect(url)
+                    .userAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.38 Safari/537.36")
+                    .get();
+
+            System.out.println(url);
+            Elements elements;
+            elements = document.getElementsByClass("list-no-v2-outter J-offer-wrapper");
+            //System.out.println(elements);
+            
+            for (Element ads: elements) {
+                    ResponseDTO responseDTO = new ResponseDTO();
+                    
+                    if (!StringUtils.isEmpty(ads.child(0).text())
+                    		&& containsAllWords(ads.child(0).text(), vehicleModel.split(" "))) {
+                    	
+                        responseDTO.setTitle(ads
+                        		.getElementsByClass("elements-title-normal__content large")
+                        		.html().replace("<strong>", "").replace("</strong>", ""));
+                        
+                        
+                        responseDTO.setImage("https:"+ads.getElementsByClass("seb-img-switcher__imgs").attr("data-image"));
+                        
+                        
+                        if(!StringUtils.isEmpty(ads.getElementsByClass("elements-offer-price-normal__promotion").text())
+                        	) {
+                        responseDTO.setPrice((ads.getElementsByClass("elements-offer-price-normal__promotion")
+                        		.html().replaceAll("[$,]", "")));
+                        }
+                        else if(!StringUtils.isEmpty(ads.getElementsByClass("elements-offer-price-normal__price").html())) {
+                        	
+                        	responseDTO.setPrice((ads.getElementsByClass("elements-offer-price-normal__price")
+                            		.text().replaceAll("[$,]", "").split("-")[0]));
+                        }
+
+                        responseDTO.setUrl(
+                        		"https:"+ads
+                        		.getElementsByClass("elements-title-normal one-line")
+                        		.attr("href"));
+                        responseDTO.setStore("Alibaba");
+                        
+                    }
+                    if (responseDTO.getUrl() != null && responseDTO.getPrice()!=null) {
+                    	//responseDTOS.add(responseDTO);
+                    	String s=responseDTO.getTitle();
+                    	String p=responseDTO.getPrice();
+                    	ResponseDTO r=responseDTORepository.findByTitle(s);
+                    			
+                    	System.out.println(r);
+                    	if(r==null) {
+                    		System.out.println("farst");
+                    		responseDTOS.add(responseDTO);
+                    		responseDTORepository.save(responseDTO);}
+                    	else if(!r.getPrice().equals(p)) {
+                    		System.out.println("seconde");
+                    		r.setPrice(responseDTO.getPrice());
+                    		responseDTOS.add(r);
+                    		}
+                    	else
+                    		responseDTOS.add(r);
+                    	
+                    	
+                    }
+                    
+                }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+
 private void extractDataFromWalmart(Set<ResponseDTO> responseDTOS, String url,String vehicleModel) {
 
 
