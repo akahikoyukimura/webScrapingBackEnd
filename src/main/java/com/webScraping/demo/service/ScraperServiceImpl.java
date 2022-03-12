@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URLStreamHandler;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -22,6 +23,7 @@ import com.webScraping.demo.model.ResponseDTO;
 import com.webScraping.demo.repositories.RequestDTORepository;
 import com.webScraping.demo.repositories.ResponseDTORepository;
 
+
 @Service
 public class ScraperServiceImpl implements ScraperService {
 
@@ -33,7 +35,6 @@ public class ScraperServiceImpl implements ScraperService {
     @Autowired
     private ResponseDTORepository responseDTORepository;
     
-    
     public static boolean containsAllWords(String word, String ...keywords) {
         for (String k : keywords)
             if (!word.toLowerCase().contains(k.toLowerCase())) return false;
@@ -43,19 +44,8 @@ public class ScraperServiceImpl implements ScraperService {
     @Override
     public Set<ResponseDTO> getVehicleByModel(String vehicleModel) {
     	
-
-    	/*if (requestDTORepository.findByKeyWord(vehicleModel)!=null) {
-			return responseDTORepository.findByRequest(requestDTORepository.findByKeyWord(vehicleModel));
-		}*/
     	
         Set<ResponseDTO> responseDTOS = new HashSet<>();
-        /*RequestDTO request=null;
-        
-        if(requestDTORepository.findByKeyWord(vehicleModel)==null) {
-        	
-        request=new RequestDTO(vehicleModel);
-        requestDTORepository.save(request);
-        }*/
 
         
         for (String url: urls) {
@@ -67,7 +57,7 @@ public class ScraperServiceImpl implements ScraperService {
                 //extractDataFromRiyasewana(responseDTOS, url + vehicleModel,request);
             }else if(url.contains("amazon")) {
             	
-            	if (vehicleModel.contains("&")) {
+            	/*if (vehicleModel.contains("&")) {
             		
             		String[] parts = vehicleModel.split("&");
             		String part1 = parts[0];
@@ -82,6 +72,31 @@ public class ScraperServiceImpl implements ScraperService {
             		extractDataFromAmazon(responseDTOS, url + vehicleModel.replaceAll(" ", "+"), vehicleModel);
             	else
             		extractDataFromAmazon(responseDTOS, url + vehicleModel, vehicleModel);
+            	*/
+            	
+            }else if(url.contains("ebay")) {
+            	
+            	/*String subURL=vehicleModel;
+            	
+            	if(vehicleModel.contains("&"))
+            		subURL=vehicleModel.split("&")[0];
+            	if(vehicleModel.contains(" "))
+            		subURL=subURL.replaceAll(" ", "+");
+            	extractDataFromEbay(responseDTOS, url + subURL, vehicleModel.split("&")[0]);
+            	*/
+            	
+            }else if(url.contains("walmart")) {
+            	
+            	String subURL=vehicleModel;
+            	
+            	if(vehicleModel.contains("&"))
+            		subURL=vehicleModel.replaceAll("&", "+");
+            	if(vehicleModel.contains(" "))
+            		subURL=subURL.replaceAll(" ", "+");
+            	System.out.println(subURL);
+            	
+            	extractDataFromWalmart(responseDTOS, url + subURL, vehicleModel.split("&")[0]);
+            	
             }
 
         }
@@ -91,6 +106,169 @@ public class ScraperServiceImpl implements ScraperService {
     
     	}
     
+private void extractDataFromWalmart(Set<ResponseDTO> responseDTOS, String url,String vehicleModel) {
+
+
+        
+        if(requestDTORepository.findByKeyWord(vehicleModel)==null) {
+        RequestDTO request=null;	
+        request=new RequestDTO(vehicleModel);
+        requestDTORepository.save(request);
+        }
+        try {
+            Document document = Jsoup
+                    .connect(url)
+                    .userAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.38 Safari/537.36")
+                    .get();
+
+            System.out.println(url);
+            
+            Elements elements;
+            
+            elements = document.getElementsByClass("mb1 ph1 pa0-xl bb b--near-white w-25");
+            //System.out.println(elements);
+            
+            for (Element ads: elements) {
+                    ResponseDTO responseDTO = new ResponseDTO();
+                    
+                    if (!StringUtils.isEmpty(ads.child(0).text())
+                    		&& containsAllWords(ads.child(0).text(), vehicleModel.split(" "))) {
+                    	
+                        responseDTO.setTitle(ads
+                        		.getElementsByClass("f6 f5-l normal dark-gray mb0 mt1 lh-title")
+                        		.first().text());
+                        responseDTO.setImage(ads.getElementsByTag("img").attr("src"));
+                        
+                        
+                        if(!StringUtils.isEmpty(ads.getElementsByClass("b f5 f4-l black mr1 lh-copy").text())
+                        		) {
+                        
+                        responseDTO.setPrice((ads.getElementsByClass("b f5 f4-l black mr1 lh-copy")
+                        		.html().replaceAll("[From $,]", "")));
+                        }else if(!StringUtils.isEmpty(ads
+                        		.getElementsByClass("mb1 ph1 pa0-xl bb b--near-white w-25").first()
+                        		.getElementsByClass("b black f5 mr1 mr2-xl lh-copy f4-l").text())) {
+                        	
+                        	responseDTO.setPrice((ads
+                            		.getElementsByClass("mb1 ph1 pa0-xl bb b--near-white w-25").first()
+                            		.getElementsByClass("b black f5 mr1 mr2-xl lh-copy f4-l")
+                            		.html().replaceAll("[$,]", "")));
+                        }
+                        responseDTO.setUrl(
+                        		"https://www.walmart.com"+ads
+                        		.getElementsByClass("mb1 ph1 pa0-xl bb b--near-white w-25").first()
+                        		.getElementsByClass("absolute w-100 h-100 z-1")
+                        		.attr("href"));
+                        responseDTO.setStore("Walmart");
+                        
+                    }
+                    if (responseDTO.getUrl() != null && responseDTO.getPrice()!=null) {
+                    	String s=responseDTO.getTitle();
+                    	String p=responseDTO.getPrice();
+                    	ResponseDTO r=responseDTORepository.findByTitle(s);
+                    			
+                    	System.out.println(r);
+                    	if(r==null) {
+                    		System.out.println("farst");
+                    		responseDTOS.add(responseDTO);
+                    		responseDTORepository.save(responseDTO);}
+                    	else if(!r.getPrice().equals(p)) {
+                    		System.out.println("seconde");
+                    		r.setPrice(responseDTO.getPrice());
+                    		responseDTOS.add(r);
+                    		}
+                    	else
+                    		responseDTOS.add(r);
+                    }
+                    
+                }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    
+private void extractDataFromEbay(Set<ResponseDTO> responseDTOS, String url,String vehicleModel) {
+
+
+        
+        if(requestDTORepository.findByKeyWord(vehicleModel)==null) {
+        RequestDTO request=null;	
+        request=new RequestDTO(vehicleModel);
+        requestDTORepository.save(request);
+        }
+        try {
+            Document document = Jsoup
+                    .connect(url)
+                    .userAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.38 Safari/537.36")
+                    .get();
+
+            System.out.println(url);
+            
+            Elements elements=null;
+            Element e=document.getElementById("srp-river-results");
+            
+            elements = e.getElementsByTag("li");
+            
+            for (Element ads: elements) {
+                    ResponseDTO responseDTO = new ResponseDTO();
+                    
+                    if (!StringUtils.isEmpty(ads.child(0).text()) 
+                    		&&ads.className().equals("s-item s-item__pl-on-bottom")
+                    		&& containsAllWords(ads.child(0).text(), vehicleModel.split(" "))) {
+                    	
+                        responseDTO.setTitle(ads
+                        		.getElementsByClass("s-item__title")
+                        		.first().text());
+                        responseDTO.setImage(ads.getElementsByTag("img").attr("src"));
+                        
+                        if(!StringUtils.isEmpty(ads.getElementsByClass("s-item__price").html())
+                        		&& !StringUtils.isEmpty(ads.getElementsByClass("s-item__detail s-item__detail--primary")
+                        				.first()
+                        				.getElementsByClass("s-item__price").text())) {
+                        	
+                        	if (ads.getElementsByClass("s-item__detail s-item__detail--primary")
+                            		.first().getElementsByClass("s-item__price").html().contains("</span>")) {
+                        		
+                        		responseDTO.setPrice((ads.getElementsByClass("s-item__detail s-item__detail--primary")
+                                		.first().getElementsByClass("s-item__price").html()
+                                		.split("<span")[0].replaceAll("[$,]", "")));
+                        		
+							}else
+                        responseDTO.setPrice((ads.getElementsByClass("s-item__detail s-item__detail--primary")
+                        		.first().getElementsByClass("s-item__price").html().replaceAll("[$,]", "")));
+                        }
+                        responseDTO.setUrl(
+                        		ads
+                        		.getElementsByClass("s-item__link")
+                        		.attr("href"));
+                        responseDTO.setStore("Ebay");
+                        
+                    }
+                    if (responseDTO.getUrl() != null && responseDTO.getPrice()!=null) {
+                    	String s=responseDTO.getTitle();
+                    	String p=responseDTO.getPrice();
+                    	ResponseDTO r=responseDTORepository.findByTitle(s);
+                    			
+                    	System.out.println(r);
+                    	if(r==null) {
+                    		System.out.println("farst");
+                    		responseDTOS.add(responseDTO);
+                    		responseDTORepository.save(responseDTO);}
+                    	else if(!r.getPrice().equals(p)) {
+                    		System.out.println("seconde");
+                    		r.setPrice(responseDTO.getPrice());
+                    		responseDTOS.add(r);
+                    		}
+                    	else
+                    		responseDTOS.add(r);
+                    }
+                    
+                }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
     
     
     private void extractDataFromAmazon(Set<ResponseDTO> responseDTOS, String url,String vehicleModel) {

@@ -13,7 +13,7 @@ public class ResponseDTO {
 
 	private @Id @GeneratedValue Long id;
 	private String title;
-	@Column(length = 455)
+	@Column(length = 1500)
 	private String url;
 	private String image;
 	private String price;
