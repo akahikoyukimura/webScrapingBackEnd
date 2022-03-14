@@ -8,9 +8,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.webScraping.demo.model.ResponseDTO;
+import com.webScraping.demo.repositories.ResponseDTORepository;
 import com.webScraping.demo.service.ScraperService;
 
 import java.util.Set;
+
 
 @CrossOrigin(origins = "http://localhost:3000/")
 @RestController
@@ -19,6 +21,8 @@ public class ScraperController {
 
 	@Autowired
     ScraperService scraperService;
+	@Autowired
+	ResponseDTORepository re;
 
     @GetMapping(path = "/{vehicleModel}")
     public Set<ResponseDTO> getVehicleByModel(@PathVariable String vehicleModel) {

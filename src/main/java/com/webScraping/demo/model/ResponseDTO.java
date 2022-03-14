@@ -4,8 +4,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 
 import lombok.Data;
 
@@ -15,14 +13,15 @@ public class ResponseDTO {
 
 	private @Id @GeneratedValue Long id;
 	private String title;
-	@Column(length = 455)
+	@Column(length = 1500)
 	private String url;
 	private String image;
 	private String price;
+	private String store;
 	
-	@ManyToOne
-    @JoinColumn(name="request_id", nullable=false)
-    private RequestDTO request;
+	//@ManyToOne
+    //@JoinColumn(name="request_id", nullable=false)
+    //private RequestDTO request;
 	
 	public String getTitle() {
 		return title;
@@ -38,18 +37,27 @@ public class ResponseDTO {
 	}
 	
 	
+	
+	
+	public String getStore() {
+		return store;
+	}
+	public void setStore(String store) {
+		this.store = store;
+	}
 	public ResponseDTO() {
 		super();
 	}
 	
 	
-	public ResponseDTO(String title, String url, String image, String price, RequestDTO request) {
+	public ResponseDTO(String title, String url, String image, String price,String store) {
 		super();
 		this.title = title;
 		this.url = url;
 		this.image = image;
 		this.price = price;
-		this.request = request;
+		this.store = store;
+		//this.request = request;
 	}
 	public Long getId() {
 		return id;
@@ -57,12 +65,8 @@ public class ResponseDTO {
 	public void setId(Long id) {
 		this.id = id;
 	}
-	public RequestDTO getRequest() {
-		return request;
-	}
-	public void setRequest(RequestDTO request) {
-		this.request = request;
-	}
+	
+	
 	public String getImage() {
 		return image;
 	}
