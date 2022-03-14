@@ -19,9 +19,7 @@ public class ResponseDTO {
 	private String price;
 	private String store;
 	
-	//@ManyToOne
-    //@JoinColumn(name="request_id", nullable=false)
-    //private RequestDTO request;
+	
 	
 	public String getTitle() {
 		return title;
